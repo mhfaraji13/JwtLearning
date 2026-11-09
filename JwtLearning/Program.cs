@@ -87,10 +87,75 @@ namespace JwtLearning
 
 
 
-            Console.WriteLine(jwt);
+            // Console.WriteLine(jwt);
 
-            var decodedPayload = DecodeJwtPayloadWithoutLibrary(jwt);
-            Console.WriteLine(decodedPayload);
+
+
+            //var decodedPayload = DecodeJwtPayloadWithoutLibrary(jwt);
+            //Console.WriteLine(decodedPayload);
+
+            //=============================================================================================
+            // Check validation Token 
+            //=============================================================================================
+
+            Console.WriteLine("Enter your JWT:");
+            var receivedToken = Console.ReadLine();
+
+            var tokenParts = receivedToken.Split('.');
+
+            var receivedHeader = tokenParts[0];
+            var receivedPayload = tokenParts[1];
+            var receivedSignature = tokenParts[2];
+
+            if (tokenParts.Length != 3)
+            {
+                Console.WriteLine("Invalid JWT structure");
+                return;
+            }
+
+            var signingInputReceived = $"{receivedHeader}.{receivedPayload}";
+
+
+            var signingInputBytesReceived = Encoding.UTF8.GetBytes(signingInputReceived);
+
+            var expectedSignature = HMACSHA256.HashData(
+                secretkey,
+                signingInputBytesReceived
+                );
+
+            var receivedSignatureBytes =
+                Base64UrlDecoded(receivedSignature);
+
+            var isSignatureValid =
+                CryptographicOperations.FixedTimeEquals(
+                    expectedSignature,
+                    receivedSignatureBytes
+                    );
+
+            Console.WriteLine(isSignatureValid ? "Signature is valid" : "Signature is invalid");
+
+        }
+
+        // decoded the signature of received jwt 
+
+        static byte[] Base64UrlDecoded(string input)
+        {
+            var base64 = input
+                .Replace("-", "+")
+                .Replace("_", "/");
+
+            switch (base64.Length % 4)
+            {
+                case 2:
+                    base64 += "==";
+                    break;
+
+                case 3:
+                    base64 += "=";
+                    break;
+            }
+
+            return Convert.FromBase64String(base64);
         }
 
         // decoded the payload of jwt
@@ -134,7 +199,7 @@ namespace JwtLearning
 
             return decodeString;
 
-            
+
 
 
             //byte[] decodedBytes = Base64Url.DecodeFromChars(parts[1]);
